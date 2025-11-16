@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import './Signup.css';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import { 
-  createUserWithEmailAndPassword, 
-  signInWithPopup, 
+import {
+  createUserWithEmailAndPassword,
+  signInWithPopup,
   updateProfile,
-  GoogleAuthProvider 
+  GoogleAuthProvider,
 } from 'firebase/auth';
 import { auth } from '../../firebase/firebase.config';
 
@@ -25,7 +25,7 @@ const Signup = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
     setError('');
   };
 
@@ -124,9 +124,10 @@ const Signup = () => {
       toast.success('Google signup successful!');
       navigate('/');
     } catch (err) {
-      const errorMessage = err.code === 'auth/popup-closed-by-user'
-        ? 'Signup cancelled'
-        : err.message || 'Google signup failed';
+      const errorMessage =
+        err.code === 'auth/popup-closed-by-user'
+          ? 'Signup cancelled'
+          : err.message || 'Google signup failed';
 
       setError(errorMessage);
       toast.error(errorMessage);
@@ -227,11 +228,7 @@ const Signup = () => {
 
         {error && <p className="error-message">{error}</p>}
 
-        <button
-          type="submit"
-          className="submit"
-          disabled={loading}
-        >
+        <button type="submit" className="submit" disabled={loading}>
           {loading ? 'Signing up...' : 'Submit'}
         </button>
 
@@ -243,11 +240,29 @@ const Signup = () => {
           disabled={loading}
           className="google-btn"
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="10"></circle>
-            <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
-            <line x1="9" y1="9" x2="9.01" y2="9"></line>
-            <line x1="15" y1="9" x2="15.01" y2="9"></line>
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.51h5.84c-.25 1.35-.98 2.49-2.07 3.24v2.69h3.34c1.95-1.79 3.07-4.43 3.07-7.69z"
+              fill="#4285F4"
+            />
+            <path
+              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.34-2.69c-1.01.68-2.3 1.08-3.94 1.08-3.02 0-5.58-2.03-6.49-4.76H2.74v2.99C4.55 20.44 7.77 23 12 23z"
+              fill="#34A853"
+            />
+            <path
+              d="M5.51 14.24C5.28 13.49 5.16 12.7 5.16 11.9c0-.8.12-1.59.35-2.34V6.57H2.74C1.96 8.15 1.5 10 1.5 11.9c0 1.9.46 3.75 1.24 5.34l2.77-2.99z"
+              fill="#FBBC05"
+            />
+            <path
+              d="M12 5.81c1.64 0 3.11.56 4.27 1.66l3.2-3.2C17.46 2.76 14.97 1.5 12 1.5c-4.23 0-7.45 2.56-9.26 6.04l2.77 2.99c.91-2.73 3.47-4.76 6.49-4.76z"
+              fill="#EA4335"
+            />
           </svg>
           {loading ? 'Connecting...' : 'Sign up with Google'}
         </button>
