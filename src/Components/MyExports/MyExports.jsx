@@ -33,16 +33,44 @@ const MyExports = () => {
   }, [user]);
 
   const handleDelete = async (id) => {
-    try {
-      await axios.delete(`https://export-import-server-zeta.vercel.app/api/exports/${id}`, {
-        headers: { 'X-User-ID': user.uid },
-      });
-      setExports(exports.filter((item) => item._id !== id));
-      toast.success('Export deleted successfully!');
-    } catch (error) {
-      console.error('Error deleting export:', error.response?.data || error.message);
-      toast.error('Failed to delete export');
-    }
+    toast(
+      ({ closeToast }) => (
+        <div className="flex flex-col items-center">
+          <p className="mb-4">Are you sure you want to delete this export?</p>
+          <div className="flex space-x-4">
+            <button
+              onClick={async () => {
+                try {
+                  await axios.delete(`https://export-import-server-zeta.vercel.app/api/exports/${id}`, {
+                    headers: { 'X-User-ID': user.uid },
+                  });
+                  setExports(exports.filter((item) => item._id !== id));
+                  toast.success('Export deleted successfully!');
+                } catch (error) {
+                  console.error('Error deleting export:', error.response?.data || error.message);
+                  toast.error('Failed to delete export');
+                }
+                closeToast();
+              }}
+              className="bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded"
+            >
+              Yes
+            </button>
+            <button
+              onClick={closeToast}
+              className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded"
+            >
+              No
+            </button>
+          </div>
+        </div>
+      ),
+      {
+        autoClose: false,
+        closeOnClick: false,
+        draggable: false,
+      }
+    );
   };
 
   const handleUpdate = (item) => {
@@ -72,22 +100,28 @@ const MyExports = () => {
       );
       setExports(exports.map((item) => (item._id === currentExport._id ? res.data : item)));
       setIsModalOpen(false);
-      toast.success('Export updated successfully!');
+      toast.success('Export updated successfully!', {
+        position: 'top-center',
+        autoClose: 3000,
+      });
     } catch (error) {
       console.error('Error updating export:', error.response?.data || error.message);
-      toast.error('Failed to update export');
+      toast.error('Failed to update export', {
+        position: 'top-center',
+        autoClose: 3000,
+      });
     }
   };
 
   return (
-    <div className="min-h-[calc(100vh-8rem)] flex flex-col py-12">
+    <div className="min-h-[calc(100vh-8rem)] flex flex-col py-12 px-3">
       <h2 className="text-3xl font-bold text-center mb-8">My Exports</h2>
       {exports.length === 0 ? (
         <p className="text-center text-gray-600 flex-grow">No exports found.</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 flex-grow">
           {exports.map((item) => (
-            <div key={item._id} className="bg-white shadow-md rounded-lg overflow-hidden">
+            <div key={item._id} className="bg-purple-200 shadow-md rounded-lg overflow-hidden">
               <img src={item.image} alt={item.name} className="w-full h-48 object-cover" />
               <div className="p-4">
                 <h3 className="text-xl font-semibold">{item.name}</h3>
@@ -98,13 +132,13 @@ const MyExports = () => {
                 <div className="mt-4 flex space-x-4">
                   <button
                     onClick={() => handleUpdate(item)}
-                    className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded"
+                    className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded"
                   >
                     Update
                   </button>
                   <button
                     onClick={() => handleDelete(item._id)}
-                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
+                    className="bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded"
                   >
                     Delete
                   </button>
@@ -128,7 +162,7 @@ const MyExports = () => {
                   id="name"
                   value={formData.name}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-purple-600"
                   required
                 />
               </div>
@@ -140,7 +174,7 @@ const MyExports = () => {
                   id="image"
                   value={formData.image}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-purple-600"
                   required
                 />
               </div>
@@ -152,7 +186,7 @@ const MyExports = () => {
                   id="price"
                   value={formData.price}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-purple-600"
                   required
                   min="0"
                   step="0.01"
@@ -166,7 +200,7 @@ const MyExports = () => {
                   id="originCountry"
                   value={formData.originCountry}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-purple-600"
                   required
                 />
               </div>
@@ -178,7 +212,7 @@ const MyExports = () => {
                   id="rating"
                   value={formData.rating}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-purple-600"
                   required
                   min="0"
                   max="5"
@@ -193,7 +227,7 @@ const MyExports = () => {
                   id="availableQuantity"
                   value={formData.availableQuantity}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-purple-600"
                   required
                   min="0"
                 />
@@ -208,7 +242,7 @@ const MyExports = () => {
                 </button>
                 <button
                   type="submit"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+                  className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded"
                 >
                   Submit
                 </button>

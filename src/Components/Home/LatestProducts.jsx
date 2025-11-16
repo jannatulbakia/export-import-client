@@ -20,14 +20,14 @@ const LatestProducts = () => {
   }, []);
 
   return (
-    <section className="min-h-[calc(100vh-8rem)] flex flex-col py-12">
+    <section className="min-h-[calc(100vh-8rem)] flex flex-col py-12 px-3">
       <h2 className="text-3xl font-bold text-center mb-8">Latest Products</h2>
       {products.length === 0 ? (
         <p className="text-center text-gray-600 flex-grow">No latest products found.</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 flex-grow">
           {products.map((product) => (
-            <div key={product._id} className="bg-white shadow-md rounded-lg overflow-hidden">
+            <div key={product._id} className="bg-purple-200 shadow-md rounded-lg overflow-hidden">
               <img src={product.image} alt={product.name} className="w-full h-48 object-cover" />
               <div className="p-4">
                 <h3 className="text-xl font-semibold">{product.name}</h3>
@@ -37,7 +37,7 @@ const LatestProducts = () => {
                 <p className="text-gray-600">Available: {product.availableQuantity}</p>
                 <Link
                   to={`/products/${product._id}`}
-                  className="mt-4 inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+                  className="mt-4 inline-block bg-purple-600  hover:bg-purple-800  text-white px-4 py-2 rounded"
                 >
                   See Details
                 </Link>

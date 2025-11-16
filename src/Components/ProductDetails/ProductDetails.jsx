@@ -54,7 +54,7 @@ const ProductDetails = () => {
         <p className="text-gray-600">Available Quantity: {product.availableQuantity}</p>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+          className="mt-4 bg-purple-600 text-white hover:bg-purple-800  px-4 py-2 rounded"
         >
           Import Now
         </button>
@@ -72,7 +72,7 @@ const ProductDetails = () => {
               onChange={(e) => setQuantity(Number(e.target.value))}
               min="1"
               max={product.availableQuantity}
-              className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-600 mb-4"
+              className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-purple-600 mb-4"
             />
             <div className="flex justify-end space-x-4">
               <button
@@ -87,7 +87,7 @@ const ProductDetails = () => {
                 className={`px-4 py-2 rounded text-white ${
                   quantity > product.availableQuantity || quantity < 1
                     ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-blue-600 hover:bg-blue-700'
+                    : 'bg-purple-600 hover:bg-purple-700'
                 }`}
               >
                 Submit

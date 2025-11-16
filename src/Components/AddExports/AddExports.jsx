@@ -45,7 +45,7 @@ const AddExports = () => {
   return (
     <div className="min-h-[calc(100vh-8rem)] flex flex-col justify-center py-12">
       <div className="max-w-md mx-auto p-6 bg-white shadow-md rounded-lg">
-        <h2 className="text-2xl font-bold text-center mb-6">Add Export</h2>
+        <h2 className="text-2xl font-bold text-center mb-6 text-purple-700">Add Export</h2>
         {error && <p className="text-red-500 text-center mb-4">{error}</p>}
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
@@ -56,7 +56,7 @@ const AddExports = () => {
               id="name"
               value={formData.name}
               onChange={handleChange}
-              className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-purple-600"
               required
             />
           </div>
@@ -68,7 +68,7 @@ const AddExports = () => {
               id="image"
               value={formData.image}
               onChange={handleChange}
-              className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-purple-600"
               required
             />
           </div>
@@ -80,7 +80,7 @@ const AddExports = () => {
               id="price"
               value={formData.price}
               onChange={handleChange}
-              className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-purple-600"
               required
               min="0"
               step="0.01"
@@ -94,7 +94,7 @@ const AddExports = () => {
               id="originCountry"
               value={formData.originCountry}
               onChange={handleChange}
-              className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-purple-600"
               required
             />
           </div>
@@ -106,7 +106,7 @@ const AddExports = () => {
               id="rating"
               value={formData.rating}
               onChange={handleChange}
-              className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-purple-600"
               required
               min="0"
               max="5"
@@ -121,14 +121,14 @@ const AddExports = () => {
               id="availableQuantity"
               value={formData.availableQuantity}
               onChange={handleChange}
-              className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-purple-600"
               required
               min="0"
             />
           </div>
           <button
             type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+            className="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded"
           >
             Add Export
           </button>

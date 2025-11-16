@@ -17,27 +17,65 @@ const MyImports = () => {
         setImports(res.data);
       } catch (error) {
         console.error('Error fetching imports:', error.response?.data || error.message);
-        toast.error('Failed to fetch imports');
+        toast.error('Failed to fetch imports', {
+          position: 'top-center',
+          autoClose: 3000,
+        });
       }
     };
     fetchImports();
   }, [user]);
 
   const handleRemove = async (id) => {
-    try {
-      await axios.delete(`https://export-import-server-zeta.vercel.app/api/imports/${id}`, {
-        headers: { 'X-User-ID': user.uid },
-      });
-      setImports(imports.filter((item) => item._id !== id));
-      toast.success('Import removed successfully!');
-    } catch (error) {
-      console.error('Error removing import:', error.response?.data || error.message);
-      toast.error('Failed to remove import');
-    }
+    toast(
+      ({ closeToast }) => (
+        <div className="flex flex-col items-center">
+          <p className="mb-4">Are you sure you want to remove this import?</p>
+          <div className="flex space-x-4">
+            <button
+              onClick={async () => {
+                try {
+                  await axios.delete(`https://export-import-server-zeta.vercel.app/api/imports/${id}`, {
+                    headers: { 'X-User-ID': user.uid },
+                  });
+                  setImports(imports.filter((item) => item._id !== id));
+                  toast.success('Import removed successfully!', {
+                    position: 'top-center',
+                    autoClose: 3000,
+                  });
+                } catch (error) {
+                  console.error('Error removing import:', error.response?.data || error.message);
+                  toast.error('Failed to remove import', {
+                    position: 'top-center',
+                    autoClose: 3000,
+                  });
+                }
+                closeToast();
+              }}
+              className="bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded"
+            >
+              Yes
+            </button>
+            <button
+              onClick={closeToast}
+              className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded"
+            >
+              No
+            </button>
+          </div>
+        </div>
+      ),
+      {
+        autoClose: false,
+        closeOnClick: false,
+        draggable: false,
+        position: 'top-center',
+      }
+    );
   };
 
   return (
-    <div className="min-h-[calc(100vh-8rem)] flex flex-col py-12">
+    <div className="min-h-[calc(100vh-8rem)] flex flex-col py-12 px-3">
       <h2 className="text-3xl font-bold text-center mb-8">My Imports</h2>
       {imports.length === 0 ? (
         <p className="text-center text-gray-600 flex-grow">No imports found.</p>
@@ -46,7 +84,7 @@ const MyImports = () => {
           {imports
             .filter((item) => item.productId)
             .map((item) => (
-              <div key={item._id} className="bg-white shadow-md rounded-lg overflow-hidden">
+              <div key={item._id} className="bg-purple-200 shadow-md rounded-lg overflow-hidden">
                 <img
                   src={item.productId.image}
                   alt={item.productId.name}
@@ -61,13 +99,13 @@ const MyImports = () => {
                   <div className="mt-4 flex space-x-4">
                     <Link
                       to={`/products/${item.productId._id}`}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+                      className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded"
                     >
                       See Details
                     </Link>
                     <button
                       onClick={() => handleRemove(item._id)}
-                      className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
+                      className="bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded"
                     >
                       Remove
                     </button>
@@ -76,7 +114,7 @@ const MyImports = () => {
               </div>
             ))}
           {imports.some((item) => !item.productId) && (
-            <p className="text-red-500 text-center">
+            <p className="text-pink-500 text-center">
               Some imports could not be displayed due to missing product data.
             </p>
           )}
