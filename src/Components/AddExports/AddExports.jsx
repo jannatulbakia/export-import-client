@@ -16,29 +16,69 @@ const AddExports = () => {
     availableQuantity: '',
   });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError('');
+
     try {
-      console.log('Sending POST to /api/exports with data:', formData);
-      const response = await axios.post(
+
+      const payload = {
+        name: formData.name,
+        image: formData.image,
+        price: parseFloat(formData.price),
+        originCountry: formData.originCountry,
+        rating: parseFloat(formData.rating),
+        availableQuantity: parseInt(formData.availableQuantity, 10),
+      };
+      console.log('Sending POST to /api/exports with data:', payload);
+      const exportResponse = await axios.post(
         'https://export-import-server-zeta.vercel.app/api/exports',
-        formData,
+        payload,
         {
           headers: { 'X-User-ID': user.uid },
         }
       );
-      console.log('Response from /api/exports:', response.data);
-      toast.success('Product added successfully!');
+      console.log('Response from /api/exports:', exportResponse.data);
+
+      console.log('Sending POST to /api/products with data:', payload);
+      const productResponse = await axios.post(
+        'https://export-import-server-zeta.vercel.app/api/products',
+        payload
+      );
+      console.log('Response from /api/products:', productResponse.data);
+
+      toast.success('Product added successfully to My Exports and All Products!', {
+        position: 'top-center',
+        autoClose: 3000,
+      });
+      setFormData({
+        name: '',
+        image: '',
+        price: '',
+        originCountry: '',
+        rating: '',
+        availableQuantity: '',
+      });
       navigate('/my-export');
     } catch (error) {
-      console.error('Error adding export:', error.response?.data || error.message);
-      setError('Failed to add product. Please try again.');
-      toast.error(error.response?.data?.message || 'Failed to add product');
+      console.error('Error adding product:', error.response?.data || error.message);
+      const errorMessage =
+        error.response?.data?.message || 'Failed to add product. Please try again.';
+      setError(errorMessage);
+      toast.error(errorMessage, {
+        position: 'top-center',
+        autoClose: 3000,
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -49,7 +89,9 @@ const AddExports = () => {
         {error && <p className="text-red-500 text-center mb-4">{error}</p>}
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label htmlFor="name" className="block text-gray-700">Product Name</label>
+            <label htmlFor="name" className="block text-gray-700">
+              Product Name
+            </label>
             <input
               type="text"
               name="name"
@@ -58,10 +100,13 @@ const AddExports = () => {
               onChange={handleChange}
               className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-purple-600"
               required
+              disabled={loading}
             />
           </div>
           <div className="mb-4">
-            <label htmlFor="image" className="block text-gray-700">Image URL</label>
+            <label htmlFor="image" className="block text-gray-700">
+              Image URL
+            </label>
             <input
               type="url"
               name="image"
@@ -70,10 +115,13 @@ const AddExports = () => {
               onChange={handleChange}
               className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-purple-600"
               required
+              disabled={loading}
             />
           </div>
           <div className="mb-4">
-            <label htmlFor="price" className="block text-gray-700">Price</label>
+            <label htmlFor="price" className="block text-gray-700">
+              Price
+            </label>
             <input
               type="number"
               name="price"
@@ -84,10 +132,13 @@ const AddExports = () => {
               required
               min="0"
               step="0.01"
+              disabled={loading}
             />
           </div>
           <div className="mb-4">
-            <label htmlFor="originCountry" className="block text-gray-700">Origin Country</label>
+            <label htmlFor="originCountry" className="block text-gray-700">
+              Origin Country
+            </label>
             <input
               type="text"
               name="originCountry"
@@ -96,10 +147,13 @@ const AddExports = () => {
               onChange={handleChange}
               className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-purple-600"
               required
+              disabled={loading}
             />
           </div>
           <div className="mb-4">
-            <label htmlFor="rating" className="block text-gray-700">Rating (0-5)</label>
+            <label htmlFor="rating" className="block text-gray-700">
+              Rating (0-5)
+            </label>
             <input
               type="number"
               name="rating"
@@ -111,10 +165,13 @@ const AddExports = () => {
               min="0"
               max="5"
               step="0.1"
+              disabled={loading}
             />
           </div>
           <div className="mb-4">
-            <label htmlFor="availableQuantity" className="block text-gray-700">Available Quantity</label>
+            <label htmlFor="availableQuantity" className="block text-gray-700">
+              Available Quantity
+            </label>
             <input
               type="number"
               name="availableQuantity"
@@ -124,13 +181,15 @@ const AddExports = () => {
               className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-purple-600"
               required
               min="0"
+              disabled={loading}
             />
           </div>
           <button
             type="submit"
             className="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded"
+            disabled={loading}
           >
-            Add Export
+            {loading ? 'Adding Product...' : 'Add Export'}
           </button>
         </form>
       </div>
