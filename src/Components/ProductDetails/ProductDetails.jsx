@@ -1,173 +1,101 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import toast from 'react-hot-toast';
+import { useParams } from 'react-router-dom';
+import axios from 'axios';
+import { toast } from 'react-toastify';
+import { useAuth } from '../../context/AuthContext';
 
 const ProductDetails = () => {
   const { id } = useParams();
+  const { user } = useAuth();
   const [product, setProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
-    fetch(`https://export-import-server-zeta.vercel.app/api/products/${id}`)
-      .then(res => {
-        if (!res.ok) throw new Error('Not found');
-        return res.json();
-      })
-      .then(data => setProduct(data))
-      .catch(() => toast.error('Product not found'));
+    const fetchProduct = async () => {
+      try {
+        const res = await axios.get(`https://export-import-server-zeta.vercel.app/api/products/${id}`);
+        setProduct(res.data);
+      } catch (error) {
+        console.error('Error fetching product details:', error.response?.data || error.message);
+        toast.error('Failed to fetch product details');
+      }
+    };
+    fetchProduct();
   }, [id]);
 
   const handleImport = async () => {
-    const available = product.availableQuantity;
-
-    if (quantity > available) {
-      toast.error(`Only ${available} available. You entered ${quantity}.`);
-      return;
-    }
-
     try {
-      const res = await fetch('https://export-import-server-zeta.vercel.app/api/imports', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId: id, quantity }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        toast.success(`Imported ${quantity} item(s)!`);
-
-        setProduct(prev => ({
-          ...prev,
-          availableQuantity: prev.availableQuantity - quantity
-        }));
-
-        setQuantity(1);
-        document.getElementById('my_modal_4').close();
-      } else {
-        toast.error(data.error || 'Import failed');
-      }
-    } catch {
-      toast.error('Network error');
+      await axios.post(
+        'https://export-import-server-zeta.vercel.app/api/imports',
+        { productId: id, quantity },
+        { headers: { 'X-User-ID': user.uid } }
+      );
+      toast.success('Product imported successfully!');
+      setIsModalOpen(false);
+      const res = await axios.get(`https://export-import-server-zeta.vercel.app/api/products/${id}`);
+      setProduct(res.data);
+    } catch (error) {
+      console.error('Error importing product:', error.response?.data || error.message);
+      toast.error(error.response?.data?.message || 'Failed to import product');
     }
   };
 
-  if (!product) return <div className="text-center py-20">Loading...</div>;
+  if (!product) return <div className="text-center py-12">Loading...</div>;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <Link to="/products" className="inline-flex items-center text-blue-600 hover:underline mb-6">
-        Back to Products
-      </Link>
-
-      <div className="grid md:grid-cols-2 gap-8">
-        <div className="relative">
-          <img
-            src={product.image}
-            alt={product.name}
-            className="w-full h-96 object-cover rounded-xl shadow-lg"
-          />
-          <div className="badge badge-success absolute top-4 left-4">In Stock</div>
-        </div>
-        <div className="flex flex-col justify-between">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
-              {product.name}
-            </h1>
-
-            <div className="rating rating-md mb-4">
-              {[...Array(5)].map((_, i) => (
-                <input
-                  key={i}
-                  type="radio"
-                  className="mask mask-star-2 bg-yellow-400"
-                  checked={i < Math.floor(product.rating)}
-                  readOnly
-                />
-              ))}
-              <span className="ml-2 text-gray-600">({product.rating})</span>
-            </div>
-
-            <div className="space-y-3 text-lg text-gray-700 mb-6">
-              <p>Origin: {product.country}</p>
-              <p>
-                <span className="font-medium">Available:</span>{' '}
-                <span className="text-2xl font-bold text-green-600">
-                  {product.availableQuantity}
-                </span>
-              </p>
-            </div>
-
-            <div className="text-4xl font-bold text-blue-600 mb-6">
-              ${product.price}
-            </div>
-          </div>
-          <button
-            className={`btn btn-primary btn-lg w-full ${product.availableQuantity === 0 ? 'btn-disabled' : ''}`}
-            onClick={() => {
-              if (product.availableQuantity === 0) {
-                toast.error('Out of stock');
-              } else {
-                document.getElementById('my_modal_4').showModal();
-              }
-            }}
-          >
-            Import Now
-          </button>
-        </div>
+    <div className="min-h-[calc(100vh-8rem)] flex flex-col justify-center py-12">
+      <div className="bg-white shadow-md rounded-lg p-6 max-w-2xl mx-auto">
+        <img src={product.image} alt={product.name} className="w-full h-64 object-cover rounded" />
+        <h2 className="text-2xl font-bold mt-4">{product.name}</h2>
+        <p className="text-gray-600 mt-2">Price: ${product.price.toFixed(2)}</p>
+        <p className="text-gray-600">Origin: {product.originCountry}</p>
+        <p className="text-gray-600">Rating: {product.rating}/5</p>
+        <p className="text-gray-600">Available Quantity: {product.availableQuantity}</p>
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+        >
+          Import Now
+        </button>
       </div>
-      <dialog id="my_modal_4" className="modal">
-        <div className="modal-box w-11/12 max-w-5xl">
-          <h3 className="font-bold text-lg mb-4">Import {product.name}</h3>
 
-          <div className="flex items-center gap-4 mb-4 p-3 bg-base-200 rounded-lg">
-            <img src={product.image} alt={product.name} className="w-20 h-20 object-cover rounded" />
-            <div>
-              <p className="font-semibold text-lg">${product.price}</p>
-              <p className="text-sm text-gray-600">
-                Available: {product.availableQuantity}
-              </p>
-            </div>
-          </div>
-
-          <div className="form-control mb-6">
-            <label className="label">
-              <span className="label-text">Quantity to Import</span>
-            </label>
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full">
+            <h3 className="text-xl font-semibold mb-4">Import {product.name}</h3>
+            <label htmlFor="quantity" className="block text-gray-700">Quantity</label>
             <input
               type="number"
+              id="quantity"
+              value={quantity}
+              onChange={(e) => setQuantity(Number(e.target.value))}
               min="1"
               max={product.availableQuantity}
-              value={quantity}
-              onChange={(e) => {
-                const val = parseInt(e.target.value) || 1;
-                setQuantity(Math.max(1, Math.min(val, product.availableQuantity)));
-              }}
-              className="input input-bordered w-full"
+              className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-600 mb-4"
             />
-            {quantity > product.availableQuantity && (
-              <label className="label">
-                <span className="label-text-alt text-error">
-                  Only {product.availableQuantity} available
-                </span>
-              </label>
-            )}
-          </div>
-
-          <div className="modal-action">
-            <button
-              onClick={handleImport}
-              disabled={quantity > product.availableQuantity}
-              className="btn btn-primary"
-            >
-              Confirm Import
-            </button>
-            <form method="dialog">
-              <button className="btn">Cancel</button>
-            </form>
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleImport}
+                disabled={quantity > product.availableQuantity || quantity < 1}
+                className={`px-4 py-2 rounded text-white ${
+                  quantity > product.availableQuantity || quantity < 1
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-blue-600 hover:bg-blue-700'
+                }`}
+              >
+                Submit
+              </button>
+            </div>
           </div>
         </div>
-      </dialog>
+      )}
     </div>
   );
 };

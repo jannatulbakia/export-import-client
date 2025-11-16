@@ -1,152 +1,87 @@
 import { useEffect, useState } from 'react';
+import axios from 'axios';
 import { Link } from 'react-router-dom';
-import toast from 'react-hot-toast';
+import { toast } from 'react-toastify';
+import { useAuth } from '../../context/AuthContext';
 
 const MyImports = () => {
+  const { user } = useAuth();
   const [imports, setImports] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [deleteId, setDeleteId] = useState(null);
 
   useEffect(() => {
     const fetchImports = async () => {
       try {
-        const res = await fetch('https://export-import-server-zeta.vercel.app/api/imports/my');
-        const data = await res.json();
-        if (res.ok) {
-          setImports(data);
-        } else {
-          toast.error(data.error || 'Failed to load imports');
-        }
-      } catch {
-        toast.error('Network error');
-      } finally {
-        setLoading(false);
+        const res = await axios.get('https://export-import-server-zeta.vercel.app/api/imports', {
+          headers: { 'X-User-ID': user.uid },
+        });
+        setImports(res.data);
+      } catch (error) {
+        console.error('Error fetching imports:', error.response?.data || error.message);
+        toast.error('Failed to fetch imports');
       }
     };
     fetchImports();
-  }, []);
+  }, [user]);
 
-  const handleRemove = async () => {
-    if (!deleteId) return;
-
-    const loadingToast = toast.loading('Removing import...');
-
+  const handleRemove = async (id) => {
     try {
-      const res = await fetch(`https://export-import-server-zeta.vercel.app/api/imports/${deleteId}`, {
-        method: 'DELETE',
+      await axios.delete(`https://export-import-server-zeta.vercel.app/api/imports/${id}`, {
+        headers: { 'X-User-ID': user.uid },
       });
-
-      if (res.ok) {
-        toast.success('Import removed successfully!', { id: loadingToast });
-        setImports(prev => prev.filter(i => i._id !== deleteId));
-        setDeleteId(null);
-        document.getElementById('remove_modal').close();
-      } else {
-        const data = await res.json();
-        toast.error(data.error || 'Failed to remove', { id: loadingToast });
-      }
-    } catch {
-      toast.error('Network error', { id: loadingToast });
+      setImports(imports.filter((item) => item._id !== id));
+      toast.success('Import removed successfully!');
+    } catch (error) {
+      console.error('Error removing import:', error.response?.data || error.message);
+      toast.error('Failed to remove import');
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <span className="loading loading-spinner loading-lg"></span>
-      </div>
-    );
-  }
-
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <h1 className="text-3xl md:text-4xl font-bold text-center mb-10 text-primary">
-        My Imports
-      </h1>
-
+    <div className="min-h-[calc(100vh-8rem)] flex flex-col py-12">
+      <h2 className="text-3xl font-bold text-center mb-8">My Imports</h2>
       {imports.length === 0 ? (
-        <div className="text-center py-20 bg-base-200 rounded-2xl">
-          <p className="text-xl text-gray-600 mb-6">You haven't imported any products yet.</p>
-          <Link to="/all-products" className="btn btn-primary btn-lg">
-            Browse Products
-          </Link>
-        </div>
+        <p className="text-center text-gray-600 flex-grow">No imports found.</p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {imports.map((imp) => {
-            const p = imp.product;
-            return (
-              <div
-                key={imp._id}
-                className="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300"
-              >
-                <figure className="h-56">
-                  <img
-                    src={p.image}
-                    alt={p.name}
-                    className="w-full h-full object-cover rounded-t-xl"
-                  />
-                </figure>
-                <div className="card-body p-6">
-                  <h2 className="card-title text-xl font-bold text-primary">
-                    {p.name}
-                  </h2>
-                  <div className="space-y-2 text-base">
-                    <p className="font-semibold">
-                      Price: <span className="text-success font-bold">${p.price}</span>
-                    </p>
-                    <p>Origin: <span className="font-medium">{p.country}</span></p>
-                    <p>
-                      Rating:{' '}
-                      <span className="font-bold text-blue-600">
-                        {p.rating} / 5
-                      </span>
-                    </p>
-                    <p className="font-bold text-green-600">
-                      Imported: {imp.importedQuantity} unit(s)
-                    </p>
-                  </div>
-
-                  <div className="card-actions mt-6 flex gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 flex-grow">
+          {imports
+            .filter((item) => item.productId)
+            .map((item) => (
+              <div key={item._id} className="bg-white shadow-md rounded-lg overflow-hidden">
+                <img
+                  src={item.productId.image}
+                  alt={item.productId.name}
+                  className="w-full h-48 object-cover"
+                />
+                <div className="p-4">
+                  <h3 className="text-xl font-semibold">{item.productId.name}</h3>
+                  <p className="text-gray-600">${item.productId.price.toFixed(2)}</p>
+                  <p className="text-gray-600">Origin: {item.productId.originCountry}</p>
+                  <p className="text-gray-600">Rating: {item.productId.rating}/5</p>
+                  <p className="text-gray-600">Imported Quantity: {item.quantity}</p>
+                  <div className="mt-4 flex space-x-4">
                     <Link
-                      to={`/products/${p._id}`}
-                      className="btn btn-outline btn-primary flex-1"
+                      to={`/products/${item.productId._id}`}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
                     >
                       See Details
                     </Link>
                     <button
-                      onClick={() => {
-                        setDeleteId(imp._id);
-                        document.getElementById('remove_modal').showModal();
-                      }}
-                      className="btn btn-error flex-1"
+                      onClick={() => handleRemove(item._id)}
+                      className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
                     >
                       Remove
                     </button>
                   </div>
                 </div>
               </div>
-            );
-          })}
+            ))}
+          {imports.some((item) => !item.productId) && (
+            <p className="text-red-500 text-center">
+              Some imports could not be displayed due to missing product data.
+            </p>
+          )}
         </div>
       )}
-
-      <dialog id="remove_modal" className="modal">
-        <div className="modal-box">
-          <h3 className="font-bold text-lg text-error mb-4">Remove Import?</h3>
-          <p className="text-gray-600 mb-6">
-            This will remove the import and restore the product quantity.
-          </p>
-          <div className="modal-action">
-            <button onClick={handleRemove} className="btn btn-error">
-              Yes, Remove
-            </button>
-            <form method="dialog">
-              <button className="btn btn-ghost">Cancel</button>
-            </form>
-          </div>
-        </div>
-      </dialog>
     </div>
   );
 };

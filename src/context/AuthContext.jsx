@@ -1,14 +1,14 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { 
-  signInWithEmailAndPassword, 
+import { auth, googleProvider } from '../firebase/firebase.config';
+import {
   createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
   onAuthStateChanged,
-  GoogleAuthProvider
+  updateProfile,
 } from 'firebase/auth';
-import { auth } from '../firebase/firebase.config';
-import toast from 'react-hot-toast';
+import { toast } from 'react-toastify';
 
 const AuthContext = createContext();
 
@@ -18,78 +18,62 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const googleProvider = new GoogleAuthProvider();
-
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser) {
-        setUser({
-          uid: currentUser.uid,
-          email: currentUser.email,
-          displayName: currentUser.displayName || 'User',
-          photoURL: currentUser.photoURL,
-        });
-      } else {
-        setUser(null);
-      }
+      setUser(currentUser);
       setLoading(false);
     });
-
     return () => unsubscribe();
   }, []);
 
-  const login = async (email, password) => {
+  const register = async (name, email, password, photoURL) => {
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      toast.success('Logged in successfully!');
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(userCredential.user, { displayName: name, photoURL });
+      setUser(userCredential.user);
+      toast.success('Registration successful!');
     } catch (error) {
-      toast.error(error.message || 'Login failed');
+      toast.error(error.message);
       throw error;
     }
   };
 
-  const register = async (name, email, photoURL, password) => {
+  const login = async (email, password) => {
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      await auth.currentUser.updateProfile({ displayName: name, photoURL });
-      toast.success('Account created successfully!');
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      setUser(userCredential.user);
+      toast.success('Login successful!');
     } catch (error) {
-      toast.error(error.message || 'Registration failed');
+      toast.error(error.message);
       throw error;
     }
   };
 
   const googleLogin = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
-      toast.success('Welcome via Google!');
+      const userCredential = await signInWithPopup(auth, googleProvider);
+      setUser(userCredential.user);
+      toast.success('Google login successful!');
     } catch (error) {
-      toast.error('Google login failed');
+      toast.error(error.message);
+      throw error;
     }
   };
 
   const logout = async () => {
     try {
       await signOut(auth);
-      toast.success('Logged out successfully');
       setUser(null);
+      toast.success('Logged out successfully!');
     } catch (error) {
-      toast.error('Logout failed');
+      toast.error(error.message);
+      throw error;
     }
   };
 
-  const value = {
-    user,
-    loading,
-    login,
-    register,
-    googleLogin,
-    logout,
-  };
-
   return (
-    <AuthContext.Provider value={value}>
-      {!loading && children}
+    <AuthContext.Provider value={{ user, loading, register, login, googleLogin, logout }}>
+      {children}
     </AuthContext.Provider>
   );
 };

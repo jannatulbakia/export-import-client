@@ -1,115 +1,222 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import toast, { Toaster } from 'react-hot-toast';
+import axios from 'axios';
+import { toast } from 'react-toastify';
+import { useAuth } from '../../context/AuthContext';
 
 const MyExports = () => {
+  const { user } = useAuth();
   const [exports, setExports] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentExport, setCurrentExport] = useState(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    image: '',
+    price: '',
+    originCountry: '',
+    rating: '',
+    availableQuantity: '',
+  });
 
   useEffect(() => {
-    const userId = localStorage.getItem('userId') || 'test-user';
+    const fetchExports = async () => {
+      try {
+        const res = await axios.get('https://export-import-server-zeta.vercel.app/api/exports', {
+          headers: { 'X-User-ID': user.uid },
+        });
+        setExports(res.data);
+      } catch (error) {
+        console.error('Error fetching exports:', error.response?.data || error.message);
+        toast.error('Failed to fetch exports');
+      }
+    };
+    fetchExports();
+  }, [user]);
 
-    fetch(`https://export-import-server-zeta.vercel.app/api/exports/my?userId=${userId}`)
-      .then(res => res.json())
-      .then(data => {
-        setExports(data);
-        setLoading(false);
-      })
-      .catch(() => {
-        toast.error('Failed to load your exports');
-        setLoading(false);
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(`https://export-import-server-zeta.vercel.app/api/exports/${id}`, {
+        headers: { 'X-User-ID': user.uid },
       });
-  }, []);
-
-  const handleDelete = (id) => {
-    toast(
-      (t) => (
-        <div className="flex flex-col gap-4">
-          <p className="font-semibold">Delete this product?</p>
-          <div className="flex gap-3">
-            <button
-              onClick={() => {
-                toast.dismiss(t.id);
-                const loadingToast = toast.loading('Deleting...');
-                fetch(`https://export-import-server-zeta.vercel.app/api/exports/${id}`, { method: 'DELETE' })
-                  .then(res => {
-                    if (res.ok) {
-                      toast.success('Product deleted successfully!', { id: loadingToast });
-                      setExports(prev => prev.filter(e => e._id !== id));
-                    } else {
-                      toast.error('Failed to delete', { id: loadingToast });
-                    }
-                  })
-                  .catch(() => toast.error('Network error', { id: loadingToast }));
-              }}
-              className="btn btn-error btn-sm"
-            >
-              Yes, Delete
-            </button>
-            <button onClick={() => toast.dismiss(t.id)} className="btn btn-ghost btn-sm">
-              Cancel
-            </button>
-          </div>
-        </div>
-      ),
-      { duration: Infinity }
-    );
+      setExports(exports.filter((item) => item._id !== id));
+      toast.success('Export deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting export:', error.response?.data || error.message);
+      toast.error('Failed to delete export');
+    }
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <span className="loading loading-spinner loading-lg"></span>
-      </div>
-    );
-  }
+  const handleUpdate = (item) => {
+    setCurrentExport(item);
+    setFormData({
+      name: item.name,
+      image: item.image,
+      price: item.price,
+      originCountry: item.originCountry,
+      rating: item.rating,
+      availableQuantity: item.availableQuantity,
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await axios.put(
+        `https://export-import-server-zeta.vercel.app/api/exports/${currentExport._id}`,
+        formData,
+        { headers: { 'X-User-ID': user.uid } }
+      );
+      setExports(exports.map((item) => (item._id === currentExport._id ? res.data : item)));
+      setIsModalOpen(false);
+      toast.success('Export updated successfully!');
+    } catch (error) {
+      console.error('Error updating export:', error.response?.data || error.message);
+      toast.error('Failed to update export');
+    }
+  };
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12">
-      <h1 className="text-5xl font-bold text-center mb-12 text-primary">My Exports</h1>
-
+    <div className="min-h-[calc(100vh-8rem)] flex flex-col py-12">
+      <h2 className="text-3xl font-bold text-center mb-8">My Exports</h2>
       {exports.length === 0 ? (
-        <div className="text-center py-24 bg-base-200 rounded-2xl">
-          <p className="text-3xl mb-8">You haven't added any products yet</p>
-          <Link to="/add-export" className="btn btn-success btn-lg text-xl">
-            Add Your First Product
-          </Link>
-        </div>
+        <p className="text-center text-gray-600 flex-grow">No exports found.</p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {exports.map((exp) => {
-            const p = exp.product;
-            return (
-              <div key={exp._id} className="card bg-base-100 shadow-2xl hover:shadow-3xl transition-all">
-                <figure className="h-64">
-                  <img src={p.image} alt={p.name} className="w-full h-full object-cover rounded-t-2xl" />
-                </figure>
-                <div className="card-body p-6">
-                  <h2 className="card-title text-2xl font-bold">{p.name}</h2>
-                  <div className="space-y-3 mt-4 text-lg">
-                    <p className="text-3xl font-bold text-success">${p.price}</p>
-                    <p><strong>Origin:</strong> {p.country}</p>
-                    <p><strong>Rating:</strong> {p.rating} stars</p>
-                    <p className="text-xl font-bold text-info">
-                      Available: <span className="text-2xl">{p.availableQuantity}</span>
-                    </p>
-                  </div>
-                  <div className="card-actions mt-6">
-                    <button
-                      onClick={() => handleDelete(exp._id)}
-                      className="btn btn-error btn-block"
-                    >
-                      Delete Product
-                    </button>
-                  </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 flex-grow">
+          {exports.map((item) => (
+            <div key={item._id} className="bg-white shadow-md rounded-lg overflow-hidden">
+              <img src={item.image} alt={item.name} className="w-full h-48 object-cover" />
+              <div className="p-4">
+                <h3 className="text-xl font-semibold">{item.name}</h3>
+                <p className="text-gray-600">${item.price.toFixed(2)}</p>
+                <p className="text-gray-600">Origin: {item.originCountry}</p>
+                <p className="text-gray-600">Rating: {item.rating}/5</p>
+                <p className="text-gray-600">Available: {item.availableQuantity}</p>
+                <div className="mt-4 flex space-x-4">
+                  <button
+                    onClick={() => handleUpdate(item)}
+                    className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded"
+                  >
+                    Update
+                  </button>
+                  <button
+                    onClick={() => handleDelete(item._id)}
+                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
+                  >
+                    Delete
+                  </button>
                 </div>
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       )}
 
-      <Toaster position="top-center" />
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full">
+            <h3 className="text-xl font-semibold mb-4">Update Export</h3>
+            <form onSubmit={handleSubmit}>
+              <div className="mb-4">
+                <label htmlFor="name" className="block text-gray-700">Product Name</label>
+                <input
+                  type="text"
+                  name="name"
+                  id="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label htmlFor="image" className="block text-gray-700">Image URL</label>
+                <input
+                  type="url"
+                  name="image"
+                  id="image"
+                  value={formData.image}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label htmlFor="price" className="block text-gray-700">Price</label>
+                <input
+                  type="number"
+                  name="price"
+                  id="price"
+                  value={formData.price}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  required
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+              <div className="mb-4">
+                <label htmlFor="originCountry" className="block text-gray-700">Origin Country</label>
+                <input
+                  type="text"
+                  name="originCountry"
+                  id="originCountry"
+                  value={formData.originCountry}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label htmlFor="rating" className="block text-gray-700">Rating (0-5)</label>
+                <input
+                  type="number"
+                  name="rating"
+                  id="rating"
+                  value={formData.rating}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  required
+                  min="0"
+                  max="5"
+                  step="0.1"
+                />
+              </div>
+              <div className="mb-4">
+                <label htmlFor="availableQuantity" className="block text-gray-700">Available Quantity</label>
+                <input
+                  type="number"
+                  name="availableQuantity"
+                  id="availableQuantity"
+                  value={formData.availableQuantity}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  required
+                  min="0"
+                />
+              </div>
+              <div className="flex justify-end space-x-4">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+                >
+                  Submit
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
